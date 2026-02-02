@@ -34,7 +34,7 @@ export default function Landing() {
 
             {/* Hero */}
             {/* Hero */}
-            <section className="relative h-[calc(100vh-4rem)] flex items-center justify-center px-4 overflow-hidden">
+            <section className="relative h-[calc(100vh-4rem)] flex items-center justify-center px-4 overflow-hidden bg-black">
                 {/* Video Background */}
                 <video
                     autoPlay
