@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, DEPARTMENTS } from './types';
-import { mockUsers, currentUser as defaultUser } from './mock-data';
+import { supabase } from './supabase';
 
 interface AuthContextType {
     user: User | null;
@@ -14,83 +14,114 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const storedUser = localStorage.getItem('currentUser');
-        if (storedUser) {
-            setUser(JSON.parse(storedUser));
-        }
+        // Check active sessions and sets the user
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session?.user) {
+                setUser(mapSupabaseUserToUser(session.user));
+            } else {
+                setUser(null);
+            }
+            setLoading(false);
+        });
+
+        const {
+            data: { subscription },
+        } = supabase.auth.onAuthStateChange((_event, session) => {
+            if (session?.user) {
+                setUser(mapSupabaseUserToUser(session.user));
+            } else {
+                setUser(null);
+            }
+            setLoading(false);
+        });
+
+        return () => subscription.unsubscribe();
     }, []);
 
     const login = async (email: string, password: string) => {
         try {
-            // Simulate API delay
-            await new Promise(resolve => setTimeout(resolve, 500));
+            const { error } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            });
 
-            // Check against mock users + default user
-            const allUsers = [defaultUser, ...mockUsers];
-            const foundUser = allUsers.find(u => u.email === email);
-
-            if (foundUser) {
-                // In a real app we would check password here
-                setUser(foundUser);
-                localStorage.setItem('currentUser', JSON.stringify(foundUser));
-                return true;
+            if (error) {
+                console.error('Login error:', error.message);
+                return false;
             }
-            return false;
-        } catch (error) {
-            console.error('Login error:', error);
+            return true;
+        } catch (err) {
+            console.error('Login exception:', err);
             return false;
         }
     };
 
     const signup = async (data: Partial<User>) => {
         try {
-            await new Promise(resolve => setTimeout(resolve, 500));
+            if (!data.email || !data.password) return false;
 
-            const newUser: User = {
-                id: Date.now().toString(),
-                email: data.email!,
-                name: data.name!,
-                department: data.department as any,
-                year: (typeof data.year === 'number' ? `${data.year}rd Year` : data.year) as any, // Simple mapping
-                faculty: "Technology", // Default for now, should infer from dept
-                headline: "Student",
-                about: data.bio || '',
-                avatar: data.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.name}`,
-                coverPhoto: "https://images.unsplash.com/photo-1557683316-973673baf926?w=1200&h=400&fit=crop",
-                location: "Campus",
-                joinedDate: new Date().toISOString(),
-                isVerified: false,
-                isMentor: false,
+            const { error } = await supabase.auth.signUp({
+                email: data.email,
                 password: data.password,
-            };
+                options: {
+                    data: {
+                        name: data.name,
+                        department: data.department,
+                        year: data.year,
+                    }
+                }
+            });
 
-            setUser(newUser);
-            localStorage.setItem('currentUser', JSON.stringify(newUser));
+            if (error) {
+                console.error('Signup error:', error.message);
+                return false;
+            }
             return true;
-        } catch (error) {
-            console.error('Signup error:', error);
+        } catch (err) {
+            console.error('Signup exception:', err);
             return false;
         }
     };
 
-    const logout = () => {
+    const logout = async () => {
+        await supabase.auth.signOut();
         setUser(null);
-        localStorage.removeItem('currentUser');
     };
+
+    // Helper to map Supabase Auth user to our User type
+    const mapSupabaseUserToUser = (supabaseUser: any): User => {
+        const metadata = supabaseUser.user_metadata || {};
+        return {
+            id: supabaseUser.id,
+            email: supabaseUser.email || '',
+            name: metadata.name || 'User',
+            avatar: metadata.avatar || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
+            coverPhoto: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
+            department: metadata.department || DEPARTMENTS[0],
+            faculty: 'Faculty of Science & Technology', // Default for now
+            year: metadata.year || 'Year 1',
+            headline: 'Student at ULK',
+            about: '',
+            location: 'Kigali, Rwanda',
+            joinedDate: new Date(supabaseUser.created_at).toISOString().split('T')[0],
+            isVerified: false,
+        };
+    }
 
     return (
         <AuthContext.Provider value={{ user, login, signup, logout, isAuthenticated: !!user }}>
-            {children}
+            {!loading && children}
         </AuthContext.Provider>
     );
 }
 
 export function useAuth() {
     const context = useContext(AuthContext);
-    if (!context) {
-        throw new Error('useAuth must be used within AuthProvider');
+    if (context === undefined) {
+        throw new Error('useAuth must be used within an AuthProvider');
     }
     return context;
 }

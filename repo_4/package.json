@@ -43,6 +43,7 @@
     "@radix-ui/react-toggle-group": "^1.1.7",
     "@radix-ui/react-tooltip": "^1.2.4",
     "@remixicon/react": "4.6.0",
+    "@supabase/supabase-js": "^2.93.3",
     "@tailwindcss/vite": "^4.1.4",
     "@typescript/native-preview": "7.0.0-dev.20250522.2",
     "class-variance-authority": "^0.7.1",
