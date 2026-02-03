@@ -35,7 +35,7 @@ export default function Signup() {
         // Call Onboarding flow instead? Or direct signup?
         // For now keeping direct signup as per repo_6, but will likely route to Onboarding later
         const success = await signup(formData);
-// hi
+// hello
         if (success) {
             navigate('/onboarding'); // Redirect to onboarding instead of dashboard
         } else {
