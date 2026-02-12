@@ -101,7 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             avatar: metadata.avatar || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
             coverPhoto: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80',
             department: metadata.department || DEPARTMENTS[0],
-            faculty: 'Faculty of Science & Technology', // Default for now
+            faculty: 'Technology', // Default for now
             year: metadata.year || 'Year 1',
             headline: 'Student at ULK',
             about: '',

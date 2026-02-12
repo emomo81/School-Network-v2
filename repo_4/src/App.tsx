@@ -139,17 +139,6 @@ function PageContent() {
     toast.success("Event deleted successfully!");
   };
 
-  // Render appropriate page based on current route
-  // We can't use Switch/Case easily inside a Route component unless we define them as child routes.
-  // But Wait! In React Router v6 we define <Route element={<Page />} />. 
-  // So we don't need this giant switch. The layout should yield Outlet.
-  // But for the CRUD props, we need to pass them down.
-  // This complicates things. 
-  // Solution: Pass props to child elements via clones or use context. 
-  // Ideally we would move this state to a Context or Store.
-  // For now, to keep it simple and working: we will define the Routes here passing the props.
-  // Actually, we can just define the routes in the Main App component and pass the props there.
-
   return (
     <>
       <Routes>
